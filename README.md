@@ -39,5 +39,12 @@ JS把执行的业务分为同步任务和异步任务。
 - \B：零宽非单词边界
 此外还有标识边界的^、$
 
+# 四、原型链继承
 
+JS的原型链继承，概括到底其实就一句：object.__proto__ = object.constructor.prototype
+每个对象都有一个__proto__指向它的原型对象，而每个函数的prototype属性用来定义那些可以被它实例化的对象(即new)继承的属性。通过Object.getPrototypeOf()方法可以获取对象的原型。
+
+所有对象最终都会继承至Object.prototype,除非Object.create(null)创建的对象
+
+而所有构造函数的原型都为Function.prototype,包括function Object(), 而Object.getPrototypeOf(Function.prototype)的原型对象为Object.prototype
 
