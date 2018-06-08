@@ -20,7 +20,7 @@ JS把执行的业务分为同步任务和异步任务。
 - 一旦"执行栈"中的所有同步任务执行完毕，系统就会读取"任务队列"，检查是否有需要执行的事件。此时，异步任务结束等待状态，回到主线程中执行。
 - 主线程会不断的重复前三步，来完成这样的过程。
 
-那结合面试中提到的问题，在JS内部对任务进行了更细致的划分，分为了宏任务(macro task)和微任务(micro task)。比如主代码块、setTimeout、setInterval以及nodejs中的setImediate等都属于宏任务。而promise.then、MutationObserver以及nodejs中process.nextTick等就属于微任务。JS执行栈不断的重复着，执行宏任务，检测并执行当前宏任务阶段的所有微任务,直至下一个宏任务。
+而在JS内部对任务进行了更细致的划分，分为了宏任务(macro task)和微任务(micro task)。比如主代码块、setTimeout、setInterval以及nodejs中的setImediate等都属于宏任务。而promise.then、MutationObserver以及nodejs中process.nextTick等就属于微任务。JS执行栈不断的重复着，执行宏任务，检测并执行当前宏任务阶段的所有微任务,直至下一个宏任务。
 
 至于宏任务和微任务的区别，按照我的理解，就是宏任务与宏任务之间会引发一次UI Render。而微任务则是辅助宏任务的执行。
 
