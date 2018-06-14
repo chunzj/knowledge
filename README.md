@@ -48,3 +48,47 @@ JS的原型链继承，概括到底其实就一句：object.__proto__ = object.c
 
 而所有构造函数的原型都为Function.prototype,包括function Object(), 而Object.getPrototypeOf(Function.prototype)的原型对象为Object.prototype
 
+# 五、从输入网址到最后浏览器呈现页面内容，中间发生了什么？
+
+当你在浏览器中输入网址，并且敲了回车以后，浏览器就开始工作了。
+- 获得域名对应的ip地址，即发送一个UDP的包给DNS服务器，DNS服务器会返回coder.com的IP, 这时候浏览器通常会把IP地址给缓存起来，这样下次访问就会加快。
+- 在TCP这个“虚拟的连接”上来发送和接收http请求。想要建立“虚拟的”TCP连接，TCP邮差需要知道4个东西：（本机IP, 本机端口，服务器IP, 服务器端口）
+
+  本机端口很简单，操作系统可以给浏览器随机分配一个， 服务器端口更简单，用的是一个“众所周知”的端口，HTTP服务就是80， 我们直接告诉TCP邮差就行。
+- 经过三次握手以后，客户端和服务器端的TCP连接就建立起来了，就可以发送http请求了。
+  
+  ![连接图](https://mmbiz.qpic.cn/mmbiz_png/KyXfCrME6UJtecodDmhbLARcnicmYUxLXfhzhnQ9QE6gj188MgVftYDnPoEU75myVCc9UNauypl9Ful7y7bh8cw/640?wx_fmt=png&tp=webp&wxfrom=5&wx_lazy=1)
+- 一个HTTP GET请求经过千山万水，历经多个路由器的转发，终于到达web服务器端。
+
+  Web服务器需要着手处理了，它有三种方式来处理：
+  - 可以用一个线程来处理所有请求，同一时刻只能处理一个，这种结构易于实现，但是这样会造成严重的性能问题。
+  - 可以为每个请求分配一个进程/线程，但是当连接太多的时候，服务器端的进程/线程会耗费大量内存资源，进程/线程的切换也会让CPU不堪重负。
+  - 复用I/O的方式，很多Web服务器都采用了复用结构，例如通过epoll的方式监视所有的连接，当连接的状态发生变化（如有数据可读）， 才用一个进程/线程对那个连     接进行处理，处理完以后继续监视，等待下次状态变化。 用这种方式可以用少量的进程/线程应对成千上万的连接请求。
+- 对于HTTP GET请求，Nginx利用epoll的方式给读取了出来， Nginx接下来要判断，这是个静态的请求还是个动态的请求啊？
+  - 如果是静态的请求（HTML文件，JavaScript文件，CSS文件，图片等），也许自己就能搞定了（当然依赖于Nginx配置，可能转发到别的缓存服务器去），读取本机     硬盘上的相关文件，直接返回。
+  - 如果是动态的请求，需要后端服务器（如Tomcat)处理以后才能返回，那就需要向Tomcat转发，如果后端的Tomcat还不止一个，那就需要按照某种策略选取一个。
+    
+    当前Ngnix支持这么几种策略:
+    - 轮询：按照次序挨个向后端服务器转发
+    - 权重：给每个后端服务器指定一个权重，相当于向后端服务器转发的几率。
+    - ip_hash： 根据ip做一个hash操作，然后找个服务器转发，这样的话同一个客户端ip总是会转发到同一个后端服务器。
+    - fair：根据后端服务器的响应时间来分配请求，响应时间段的优先分配。
+    
+    ![nginx与应用服务器](https://mmbiz.qpic.cn/mmbiz_png/KyXfCrME6UJtecodDmhbLARcnicmYUxLXCPeNnuyz1ZBTHkPVlFAUIBy612Wn3GcyshlTRyjN2I8T3iaTPzuo7ibQ/640?wx_fmt=png&tp=webp&wxfrom=5&wx_lazy=1)
+
+- 不管用哪种算法，某个后端服务器最终被选中，然后Nginx需要把HTTP Request转发给后端的Tomcat，并且把Tomcat输出的HttpResponse再转发给浏览器。
+  
+  ![整个连接图谱](https://mmbiz.qpic.cn/mmbiz_png/KyXfCrME6UJtecodDmhbLARcnicmYUxLX85tOHEcpBVlOMPMBeVJ92Kt7SguL8eTjbUxNBHZggkI283lroDoM1g/640?wx_fmt=png&tp=webp&wxfrom=5&wx_lazy=1)
+  
+- 浏览器收到了Http Response，从其中读取了HTML页面，开始准备显示这个页面。
+  
+  开始到不同的服务器去下载资源，包括js、css、图片等。如果下载的资源太多，则浏览器会创建多个TCP连接，并行的去下载。
+  
+  ![下载静态资源](https://mmbiz.qpic.cn/mmbiz_png/KyXfCrME6UJtecodDmhbLARcnicmYUxLXjdsj3kiaE65BnFF8TCCyI9UA1wVf1Nj7XC1htib8QpC12r1nUic1cqtCQ/640?wx_fmt=png&tp=webp&wxfrom=5&wx_lazy=1)
+  
+- 当服务器给浏览器发送JS,CSS这些文件时，会告诉浏览器这些文件什么时候过期（使用Cache-Control或者Expire），浏览器可以把文件缓存到本地，当第二次请求同样的文件时，如果不过期，直接从本地取就可以了。
+
+- 如果过期了，浏览器就可以询问服务器端，文件有没有修改过？（依据是上一次服务器发送的Last-Modified和ETag），如果没有修改过（304 Not Modified），还可以使用缓存。否则的话服务器就会被最新的文件发回到浏览器。
+
+- 浏览器会通过DOM Tree和CSS Rule Tree生成所谓“Render Tree”，计算每个元素的位置/大小，进行布局，然后调用操作系统的API进行绘制，这是一个非常复杂的过程。
+  
