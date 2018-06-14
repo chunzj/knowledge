@@ -92,3 +92,4 @@ JS的原型链继承，概括到底其实就一句：object.__proto__ = object.c
 
 - 浏览器会通过DOM Tree和CSS Rule Tree生成所谓“Render Tree”，计算每个元素的位置/大小，进行布局，然后调用操作系统的API进行绘制，这是一个非常复杂的过程。
   
+最后，就能看到域名对应的内容了。
