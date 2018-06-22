@@ -94,7 +94,7 @@ JS的原型链继承，概括到底其实就一句：object.__proto__ = object.c
   
 最后，就能看到域名对应的内容了。
 
-# link、script、image新标签属性
+# 六、link、script、image新标签属性
 
 - crossorigin
   
