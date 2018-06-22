@@ -93,3 +93,16 @@ JS的原型链继承，概括到底其实就一句：object.__proto__ = object.c
 - 浏览器会通过DOM Tree和CSS Rule Tree生成所谓“Render Tree”，计算每个元素的位置/大小，进行布局，然后调用操作系统的API进行绘制，这是一个非常复杂的过程。
   
 最后，就能看到域名对应的内容了。
+
+# link、script、image新标签属性
+
+- crossorigin
+  
+  该枚举属性指定在加载相关图片时是否必须使用CORS。可取的值包括以下两个:
+  - anonymous：会发起一个跨域请求（即包含Origin: HTTP头）。但不会发送任何认证信息（即不发送cookie, X.509证书和HTTP基本认证信息）。如果服务器没有给出源站凭证（不设置Access-Control-Allow-Origin: HTTP头），这张图片就会被污染并限制使用。 
+  - use-credentials：会发起一个带有认证信息 (发送 cookie, X.509 证书和 HTTP 基本认证信息) 的跨域请求 (即包含 Origin: HTTP 头). 如果服务器没有给出源站凭证 (不设置 Access-Control-Allow-Origin: HTTP 头), 这张图片就会被污染并限制使用. 
+  - 当不设置该属性时, 资源将会不使用 CORS 加载 (即不发送 Origin: HTTP 头), 这将阻止其在元素中进行使用. 若设置了非法的值, 则视为使用 anonymous. 
+
+- integrity
+  
+  子资源完整性 (SRI) 是一项安全功能，可让浏览器验证其抓取的文件 (例如，从一个 CDN) 是在没有意外操作的情况下传递的。它的工作原理是允许您提供一个获取的文件必须匹配的加密散列/哈希。 
